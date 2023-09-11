@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import datetime
 import os.path
 
@@ -11,6 +9,33 @@ from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+
+
+def event_to_order_and_item(event):
+    order = None
+    if event["start"].get("dateTime"):
+        start = datetime.datetime.strptime(event["start"]["dateTime"], "%Y-%m-%dT%H:%M:%S%z")
+        if start.date() == datetime.date.today():
+            start_str = start.strftime("%H:%M")
+            order = (0, start)
+        else:
+            start_str = start.strftime("%Y-%m-%d %H:%M")
+            order = (3, start)
+    else:
+        start = datetime.datetime.strptime(event["start"]["date"], "%Y-%m-%d")
+        if start.date() == datetime.date.today():
+            start_str = "Today"
+            order = (1, start)
+        else:
+            start_str = start.strftime("%Y-%m-%d")
+            order = (2, start)
+
+    assert order
+
+    google_meet_urls = [ep["uri"] for ep in event.get("conferenceData", {}).get("entryPoints", []) if ep["uri"].startswith("https://meet.google.com")]
+    google_meet_url = google_meet_urls[0] if len(google_meet_urls) == 1 else None
+    actions = f"| href={google_meet_url}" if google_meet_url else ""
+    return order, " ".join([start_str, event['summary'], actions])
 
 
 def main():
@@ -49,25 +74,10 @@ def main():
             print('No upcoming events found.')
             return
 
-        # Prints the start and name of the next 10 events
-        for i, event in enumerate(events):
-            if event["start"].get("dateTime"):
-                start = datetime.datetime.strptime(event["start"]["dateTime"], "%Y-%m-%dT%H:%M:%S%z")
-                if start.date() == datetime.date.today():
-                    start_str = start.strftime("%H:%M")
-                else:
-                    start_str = start.strftime("%Y-%m-%d %H:%M")
-            else:
-                start = datetime.datetime.strptime(event["start"]["date"], "%Y-%m-%d")
-                if start.date() == datetime.date.today():
-                    start_str = "Today"
-                else:
-                    start_str = start.strftime("%Y-%m-%d")
+        order_and_items = [event_to_order_and_item(e) for e in events]
 
-            google_meet_urls = [ep["uri"] for ep in event.get("conferenceData", {}).get("entryPoints", []) if ep["uri"].startswith("https://meet.google.com")]
-            google_meet_url = google_meet_urls[0] if len(google_meet_urls) == 1 else None
-            actions = f"| href={google_meet_url}" if google_meet_url else ""
-            print(start_str, event['summary'], actions)
+        for i, (_order, item) in enumerate(sorted(order_and_items)):
+            print(item)
             if i == 0:
                 print("---")
         print("Refresh | refresh=true")
