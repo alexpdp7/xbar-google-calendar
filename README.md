@@ -1,5 +1,5 @@
 ```
-$ pipx install git+https://github.com/alexpdp7/xbar-google-calendar
+$ pipx install git+https://github.com/alexpdp7/xbar-google-calendar.git
 ```
 
 This code is heavily based on <https://developers.google.com/calendar/api/quickstart/python>.
