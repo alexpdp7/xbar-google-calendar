@@ -1,6 +1,14 @@
+"""
+Based on https://developers.google.com/calendar/api/quickstart/python
+"""
+
 import datetime
-import os.path
+import pathlib
+import os
 import re
+import sys
+
+import appdirs
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -8,8 +16,13 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+
+
+APPNAME = "xbar-google-calendar"
+APPAUTHOR = "pdp7"
 
 
 def event_to_order_and_item(event):
@@ -20,8 +33,6 @@ def event_to_order_and_item(event):
     bluejeans_url = bluejeans_matches.group() if bluejeans_matches else None
 
     url = google_meet_url or bluejeans_url
-
-    created_by_me = event.get("creator", {}).get("self", False)
 
     my_response_status = [a["responseStatus"] for a in event.get("attendees", []) if a.get("self")]
     accepted = my_response_status == ["accepted"]
@@ -61,6 +72,11 @@ def event_to_order_and_item(event):
     return order, " ".join([time_str, event['summary'], actions])
 
 
+def log(s):
+    if not os.environ.get("ARGOS_VERSION"):
+        print(s, file=sys.stderr)
+
+
 def main():
     """Shows basic usage of the Google Calendar API.
     Prints the start and name of the next 10 events on the user's calendar.
@@ -69,18 +85,24 @@ def main():
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    token_path = pathlib.Path(appdirs.user_cache_dir(APPNAME, APPAUTHOR)) / "token.json"
+    log(f"Trying to load token from {token_path}")
+    if token_path.exists():
+        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
+        log(f"Not found or invalid: {creds}")
         if creds and creds.expired and creds.refresh_token:
+            log("Refreshing creds")
             creds.refresh(Request())
         else:
+            credentials_path = pathlib.Path(appdirs.user_config_dir(APPNAME, APPAUTHOR)) / "credentials.json"
+            log(f"Getting token from {credentials_path}")
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+                credentials_path, SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('token.json', 'w') as token:
+        with open(token_path, 'w') as token:
             token.write(creds.to_json())
 
     try:
