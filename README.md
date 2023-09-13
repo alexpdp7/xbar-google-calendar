@@ -10,5 +10,5 @@ Run `xbar-google-calendar`; it will fail and write the path where it expects the
 To install on Argos:
 
 ```
-$ ln -s $(which xbar-google-calendar) ~/.config/argos/calendar.10m
+$ ln -s $(which xbar-google-calendar) ~/.config/argos/calendar.10m.py
 ```
