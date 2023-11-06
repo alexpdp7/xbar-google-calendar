@@ -6,7 +6,7 @@ authors = ["alex <alex@pdp7.net>"]
 
 [tool.poetry.dependencies]
 python = "~3.9"
-google-api-python-client = "^2.105.0"
+google-api-python-client = "^2.106.0"
 google-auth-httplib2 = "^0.1.1"
 google-auth-oauthlib = "^1.1.0"
 appdirs = "^1.4.4"
