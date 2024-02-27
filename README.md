@@ -1,3 +1,5 @@
+DEPRECATED: I will not be using this project daily any more. Ping me (or fork directly) if you are interested.
+
 ```
 $ pipx install git+https://github.com/alexpdp7/xbar-google-calendar.git
 ```
